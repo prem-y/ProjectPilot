@@ -1,15 +1,47 @@
 import React from "react";
-
-const Menu = ({ addNode }) => {
+import FormTypeClass from "./FormTypeClass";
+import DownloadButton from "./DownloadButton";
+const Menu = ({ addNode, node, setNode, updateNode }) => {
+  const handleRelationshipChange = (e) => {
+    const updatedNode = {
+      ...node,
+      type: e.target.value,
+    };
+    setNode(updatedNode);
+    updateNode(updatedNode);
+  };
   return (
     <>
       <div style={{ height: "20vw", width: "20vw" }}>
         <div>Menu</div>
-        <button className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-        onClick={()=>addNode()}
-        >
-          Add Node
-        </button>
+        {node.type === "association" ||  node.type === "composition" ? (
+          <FormTypeClass
+            addNode={addNode}
+            node={node}
+            setNode={setNode}
+            updateNode={updateNode}
+            handleRelationshipChange={handleRelationshipChange}
+          />
+        ) : null}
+        <div className="flex-col">
+          <div>
+            <button
+              className="bg-blue-500 text-white w-full mb-1 p-1"
+              onClick={() => addNode("newNode")}
+            >
+              Add Node
+            </button>
+          </div>
+          <div>
+            <button
+              className="bg-blue-500 text-white w-full mb-1 p-1"
+              onClick={() => addNode("classBlock")}
+            >
+              Class Block
+            </button>
+          </div>
+          <div></div>
+        </div>
       </div>
     </>
   );

@@ -10,23 +10,30 @@ const NodeType = ({ data, isConnectable }) => {
   return (
     <>
       <div className="text-updater-node border-2">
+        <div>
+          <div>{data.label}</div>
+          <input
+            id="text"
+            name="text"
+            onChange={onChange}
+            className="m-4"
+            placeholder="Text"
+          />
+        </div>
         <Handle
           type="target"
           position={Position.Top}
           isConnectable={isConnectable}
         />
-        <div>
-          <input id="text" name="text" onChange={onChange} className="m-4" placeholder="Text"/>
-        </div>
-        
+
         <Handle
           type="source"
           position={Position.Left}
           id="a"
-          style={handleStyle}   
+          style={handleStyle}
           isConnectable={isConnectable}
         />
-        
+
         <Handle
           type="source"
           position={Position.Bottom}
