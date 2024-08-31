@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import Menu from "./Menu";
@@ -49,11 +49,25 @@ const dummyNode = {
 
 const initialEdges = [];
 
-const Grid = () => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [nodeCount, setNodeCount] = useState(2);
+const Grid = ({flowId}) => {
+  const [data, setData] = useState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodeCount, setNodeCount] = useState(data?.nodes?.length || 2);
 
+  useEffect(() =>{
+    if(flowId){
+      axios.get(`http://localhost:5000/data/${flowId}`)
+      .then((response)=>{
+        const fetchedData = response.data;
+        setData(fetchedData);
+        setNodes(fetchedData.nodes || []);
+        setEdges(fetchedData.edges || []);
+        setNodeCount(fetchedData.nodes?.length || 2);
+      })
+      .catch((error) => console.log("Error fetching data: ",error));
+    }
+  }, [flowId]);
   const [node, setNode] = useState(dummyNode);
   const onConnect = useCallback(
     (params) =>
@@ -68,16 +82,16 @@ const Grid = () => {
   const addNode = (msg) => {
     if (msg === "newNode") {
       const newNode = {
-        id: (nodeCount + 1).toString(),
+        id: uuidv4(),
         position: { x: 0, y: 0 },
-        data: { label: (nodeCount + 1).toString() },
+        data: { label: "NewNode" },
       };
       setNodes((nds) => nds.concat(newNode));
       setNodeCount(nodeCount + 1);
     }
     if (msg === "classBlock") {
       const newNode = {
-        id: (nodeCount + 1).toString(),
+        id: uuidv4(),
         position: { x: 0, y: 0 },
         data: {
           title: "Title heree",
@@ -142,25 +156,30 @@ const Grid = () => {
   };
 
   const saveFlowData = () => {
-    alert("ok");
+    if (!flowId) {
+      console.error("Flow ID is missing");
+      return;
+    }
+    
     const flowData = {
-      flowId: uuidv4(), // Replace with a unique identifier for the flow
+      flowId,
+      projectName: data.projectName,
       nodes,
       edges,
     };
-    console.log(flowData);
     axios
-      .post("http://localhost:5000/data/add", flowData, {
+      .put(`http://localhost:5000/data/update/${flowId}`, flowData, {
         
         headers: {
           "Content-Type": "application/json",
         },
       })
       .then((response) => {
+        alert("ok");
         console.log("Flow data saved successfully", response);
       })
       .catch((error) => {
-        console.error("Error saving flow data", error);
+        console.error("Error updating flow data", error);
       });
   };
 
@@ -173,6 +192,7 @@ const Grid = () => {
             node={node}
             setNode={setNode}
             updateNode={updateNode}
+            projectName = {data.projectName}
           />
         </div>
         <div className="outline-dotted">

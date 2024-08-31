@@ -1,7 +1,7 @@
 import React from "react";
 import FormTypeClass from "./FormTypeClass";
 import DownloadButton from "./DownloadButton";
-const Menu = ({ addNode, node, setNode, updateNode }) => {
+const Menu = ({ addNode, node, setNode, updateNode, projectName }) => {
   const handleRelationshipChange = (e) => {
     const updatedNode = {
       ...node,
@@ -13,6 +13,7 @@ const Menu = ({ addNode, node, setNode, updateNode }) => {
   return (
     <>
       <div style={{ height: "20vw", width: "20vw" }}>
+        <div>Project: {projectName}</div>
         <div>Menu</div>
         {node.type === "association" ||  node.type === "composition" ? (
           <FormTypeClass
