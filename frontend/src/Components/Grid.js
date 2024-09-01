@@ -18,7 +18,6 @@ import {
   applyNodeChanges,
   Panel,
 } from "@xyflow/react";
-
 import "@xyflow/react/dist/style.css";
 
 const nodeTypes = {
@@ -33,52 +32,49 @@ const dummyNode = {
   position: { x: 200, y: 200 },
   data: {
     title: "Title here",
-    attributeItems: [
-      {
-        item: "Add attribute1",
-      },
-    ],
-    operationItems: [
-      {
-        item: "Add operation1",
-      },
-    ],
+    attributeItems: [{ item: "Add attribute1" }],
+    operationItems: [{ item: "Add operation1" }],
   },
   type: "nodeType",
 };
 
 const initialEdges = [];
 
-const Grid = ({flowId}) => {
+const Grid = ({ flowId }) => {
   const [data, setData] = useState([]);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [nodeCount, setNodeCount] = useState(data?.nodes?.length || 2);
 
-  useEffect(() =>{
-    if(flowId){
-      axios.get(`http://localhost:5000/data/${flowId}`)
-      .then((response)=>{
-        const fetchedData = response.data;
-        setData(fetchedData);
-        setNodes(fetchedData.nodes || []);
-        setEdges(fetchedData.edges || []);
-        setNodeCount(fetchedData.nodes?.length || 2);
-      })
-      .catch((error) => console.log("Error fetching data: ",error));
+  useEffect(() => {
+    if (flowId) {
+      axios
+        .get(`http://localhost:5000/data/${flowId}`)
+        .then((response) => {
+          const fetchedData = response.data;
+          setData(fetchedData);
+          setNodes(fetchedData.nodes || []);
+          setEdges(fetchedData.edges || []);
+          setNodeCount(fetchedData.nodes?.length || 2);
+        })
+        .catch((error) => console.log("Error fetching data: ", error));
     }
   }, [flowId]);
+
   const [node, setNode] = useState(dummyNode);
+
   const onConnect = useCallback(
     (params) =>
       setEdges((eds) => addEdge({ ...params, type: "straight" }, eds)),
     [setEdges]
   );
+
   const handleNodeClick = useCallback((e, Node) => {
     if (Node.type === "association" || Node.type === "composition") {
       setNode(Node);
     }
-  });
+  }, []);
+
   const addNode = (msg) => {
     if (msg === "newNode") {
       const newNode = {
@@ -145,6 +141,7 @@ const Grid = ({flowId}) => {
       setNodeCount(nodeCount + 1);
     }
   };
+
   const onElementsRemove = (elementsToRemove) => {
     setNodes((nds) => applyNodeChanges(elementsToRemove, nds));
   };
@@ -160,7 +157,7 @@ const Grid = ({flowId}) => {
       console.error("Flow ID is missing");
       return;
     }
-    
+
     const flowData = {
       flowId,
       projectName: data.projectName,
@@ -169,13 +166,12 @@ const Grid = ({flowId}) => {
     };
     axios
       .put(`http://localhost:5000/data/update/${flowId}`, flowData, {
-        
         headers: {
           "Content-Type": "application/json",
         },
       })
       .then((response) => {
-        alert("ok");
+        alert("Flow data saved successfully");
         console.log("Flow data saved successfully", response);
       })
       .catch((error) => {
@@ -184,50 +180,47 @@ const Grid = ({flowId}) => {
   };
 
   return (
-    <>
-      <div className="flex">
-        <div className="outline-dotted">
-          <Menu
-            addNode={addNode}
-            node={node}
-            setNode={setNode}
-            updateNode={updateNode}
-            projectName = {data.projectName}
-          />
-        </div>
-        <div className="outline-dotted">
-          <div style={{ width: "80vw", height: "100vh" }}>
-            <ReactFlowProvider>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeTypes}
-                onElementsRemove={onElementsRemove}
-                deleteKeyCode={["Backspace", "Delete"]}
-                onNodeClick={handleNodeClick}
-              >
-                <Panel position="top">
-                  <button
-                    onClick={saveFlowData}
-                    className="bg-green-500 text-white p-2"
-                  >
-                    Save Flow
-                  </button>
-                </Panel>
-
-                <DownloadButton />
-                <Controls />
-                <MiniMap />
-                <Background variant="lines" gap={12} size={1} />
-              </ReactFlow>
-            </ReactFlowProvider>
-          </div>
+    <div className="flex space-x-4 p-4">
+      <div className="w-1/4 p-4 bg-gray-100 rounded-md shadow-md">
+        <Menu
+          addNode={addNode}
+          node={node}
+          setNode={setNode}
+          updateNode={updateNode}
+          projectName={data.projectName}
+        />
+      </div>
+      <div className="w-3/4 p-4 bg-white rounded-md shadow-md">
+        <div style={{ width: "100%", height: "100vh" }}>
+          <ReactFlowProvider>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              nodeTypes={nodeTypes}
+              onElementsRemove={onElementsRemove}
+              deleteKeyCode={["Backspace", "Delete"]}
+              onNodeClick={handleNodeClick}
+            >
+              <Panel position="top">
+                <button
+                  onClick={saveFlowData}
+                  className="bg-green-500 text-white p-2 rounded-md shadow-md hover:bg-green-600"
+                >
+                  Save Flow
+                </button>
+              </Panel>
+              <DownloadButton />
+              <Controls />
+              <MiniMap />
+              <Background variant="lines" gap={12} size={1} />
+            </ReactFlow>
+          </ReactFlowProvider>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
