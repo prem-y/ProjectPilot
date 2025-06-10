@@ -6,6 +6,7 @@ import NodeType from "./NodeType";
 import AssociationType from "./NodeTypeClass/AssociationType";
 import CompositionType from "./NodeTypeClass/CompositionType";
 import DownloadButton from "./DownloadButton";
+import ActivityType from "./NodeTypeClass/ActivityType";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -24,6 +25,7 @@ const nodeTypes = {
   nodeType: NodeType,
   composition: CompositionType,
   association: AssociationType,
+  activity: ActivityType,
 };
 const initialNodes = [];
 
@@ -45,11 +47,12 @@ const Grid = ({ flowId }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [nodeCount, setNodeCount] = useState(data?.nodes?.length || 2);
-
+  const [isMenuOpen, setIsMenuOpen] = useState(true);
+  const [table, setTable] = useState([]);
   useEffect(() => {
     if (flowId) {
       axios
-        .get(`http://localhost:5000/data/${flowId}`)
+        .get(`http://localhost:5000/flow/${flowId}`)
         .then((response) => {
           const fetchedData = response.data;
           setData(fetchedData);
@@ -126,19 +129,26 @@ const Grid = ({ flowId }) => {
             {
               item: "composition",
             },
-            {
-              item: "aggregation",
-            },
-            {
-              item: "generalization",
-            },
           ],
-          selectedRelationship: "composition",
+          selectedRelationship: "association",
         },
-        type: "composition",
+        type: "association",
       };
       setNodes((nds) => nds.concat(newNode));
       setNodeCount(nodeCount + 1);
+    }
+    if (msg === "activity") {
+      setNode([]);
+      for (let i = 0; i < table.length; i++) {
+        const newNode = {
+          id: uuidv4(),
+          position: { x: i, y: i },
+          data: { activityNumber: table[i].number, activityName: table[i].activity, duration: table[i].duration },
+          type: "activity"
+        };
+        setNodes((nds) => nds.concat(newNode));
+        setNodeCount(nodeCount + 1);
+      }
     }
   };
 
@@ -152,72 +162,97 @@ const Grid = ({ flowId }) => {
     );
   };
 
-  const saveFlowData = () => {
+  const saveFlowData = async () => {
     if (!flowId) {
       console.error("Flow ID is missing");
       return;
     }
-
-    const flowData = {
-      flowId,
-      projectName: data.projectName,
-      nodes,
-      edges,
-    };
-    axios
-      .put(`http://localhost:5000/data/update/${flowId}`, flowData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        alert("Flow data saved successfully");
-        console.log("Flow data saved successfully", response);
-      })
-      .catch((error) => {
-        console.error("Error updating flow data", error);
-      });
+    try {
+      const flowData = {
+        flowId,
+        projectName: data.projectName,
+        projectType: data.projectType,
+        nodes,
+        edges,
+      };
+      console.log("Flow data to save: ", flowData);
+      const response = await axios.put(
+        `http://localhost:5000/flow/update/${flowId}`,
+        flowData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      alert("Flow data saved successfully");
+      console.log("Flow data saved successfully", response);
+    } catch (error) {
+      console.error("Error updating flow data", error);
+    }
   };
 
   return (
     <div className="flex space-x-4 p-4">
-      <div className="w-1/4 p-4 bg-gray-100 rounded-md shadow-md">
-        <Menu
-          addNode={addNode}
-          node={node}
-          setNode={setNode}
-          updateNode={updateNode}
-          projectName={data.projectName}
-        />
-      </div>
-      <div className="w-3/4 p-4 bg-white rounded-md shadow-md">
-        <div style={{ width: "100%", height: "100vh" }}>
-          <ReactFlowProvider>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              onElementsRemove={onElementsRemove}
-              deleteKeyCode={["Backspace", "Delete"]}
-              onNodeClick={handleNodeClick}
+      <div className="w-full">
+        <div className="flex">
+          {isMenuOpen && (
+            <div className="w-2/5 p-4 bg-gray-100 rounded-md shadow-md">
+              <Menu
+                addNode={addNode}
+                node={node}
+                setNode={setNode}
+                updateNode={updateNode}
+                projectName={data.projectName}
+                projectType={data.projectType}
+                table={table}
+                setTable={setTable}
+              />
+            </div>
+          )}
+
+          <div>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="bg-blue-500 text-white p-2 mb-4 rounded-md shadow-md hover:bg-blue-600"
             >
-              <Panel position="top">
-                <button
-                  onClick={saveFlowData}
-                  className="bg-green-500 text-white p-2 rounded-md shadow-md hover:bg-green-600"
+              {isMenuOpen ? "<" : ">"}
+            </button>
+          </div>
+          <div
+            className={`${
+              isMenuOpen ? "w-3/5" : "w-full"
+            } p-4 bg-white rounded-md shadow-md`}
+          >
+            <div style={{ width: "100%", height: "100vh" }}>
+              <ReactFlowProvider>
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  nodeTypes={nodeTypes}
+                  onElementsRemove={onElementsRemove}
+                  deleteKeyCode={["Backspace", "Delete"]}
+                  onNodeClick={handleNodeClick}
                 >
-                  Save Flow
-                </button>
-              </Panel>
-              <DownloadButton />
-              <Controls />
-              <MiniMap />
-              <Background variant="lines" gap={12} size={1} />
-            </ReactFlow>
-          </ReactFlowProvider>
+                  <Panel position="top">
+                    <button
+                      onClick={saveFlowData}
+                      className="bg-green-500 text-white p-2 rounded-md shadow-md hover:bg-green-600"
+                    >
+                      Save Flow
+                    </button>
+                  </Panel>
+                  <DownloadButton />
+                  <Controls />
+                  <MiniMap />
+                  <Background variant="lines" gap={12} size={1} />
+                </ReactFlow>
+              </ReactFlowProvider>
+            </div>
+          </div>
         </div>
       </div>
     </div>

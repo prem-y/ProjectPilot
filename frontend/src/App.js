@@ -1,6 +1,6 @@
 import {BrowserRouter, Routes, Route} from 'react-router-dom'
-import Home from './Pages/Home'
-import Canvas from './Pages/Canvas';
+import Home from './pages/Home'
+import Canvas from './pages/Canvas';
 function App() {
   return (
     <>

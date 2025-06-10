@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import Grid from '../Components/Grid'
+import Grid from '../components/Grid'
 import { useLocation } from 'react-router-dom'
 const Canvas = () => {
   const [flowId, setFlowId] = useState(null);
